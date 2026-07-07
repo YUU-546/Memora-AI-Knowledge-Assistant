@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "FastAPI backend for Memora AI personal knowledge assistant"
 requires-python = ">=3.11"
 dependencies = [
+    "cryptography>=43.0.0",
     "fastapi>=0.115.0",
     "httpx>=0.27.0",
     "pydantic>=2.8.0",
