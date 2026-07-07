@@ -1,19 +1,20 @@
-import pytest
+import asyncio
 
 from app.core.config import Settings
 from app.integrations.deepseek import DeepSeekClient
 from app.models.schemas import MessageIn
 
 
-@pytest.mark.asyncio
-async def test_fallback_analyzer_without_api_key() -> None:
+def test_fallback_analyzer_without_api_key() -> None:
     settings = Settings(deepseek_api_key="")
     client = DeepSeekClient(settings)
 
-    result = await client.analyze_knowledge(
-        MessageIn(
-            user_id="u_001",
-            content="DeepSeek 成本较低，适合 MVP 阶段做知识摘要和分类。",
+    result = asyncio.run(
+        client.analyze_knowledge(
+            MessageIn(
+                user_id="u_001",
+                content="DeepSeek 成本较低，适合 MVP 阶段做知识摘要和分类。",
+            )
         )
     )
 
