@@ -46,6 +46,11 @@ class KnowledgeSaveResult(BaseModel):
     message: str
 
 
+class FeishuFieldSpec(BaseModel):
+    field_name: str
+    type: int = 1
+
+
 class MessageProcessResult(BaseModel):
     saved: bool
     knowledge_id: str | None = None

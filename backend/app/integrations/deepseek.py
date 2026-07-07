@@ -47,7 +47,7 @@ class DeepSeekClient:
             **parsed,
             model=self.settings.deepseek_model,
             token_usage=usage,
-        )
+        ).model_copy(update=self._fallback_missing_fields(parsed, message))
 
     def _build_user_prompt(self, message: MessageIn) -> str:
         return "\n".join(
@@ -67,6 +67,45 @@ class DeepSeekClient:
             completion_tokens=usage.get("completion_tokens", 0),
             total_tokens=usage.get("total_tokens", 0),
         )
+
+    def _fallback_missing_fields(self, parsed: dict[str, Any], message: MessageIn) -> dict[str, Any]:
+        updates: dict[str, Any] = {}
+        content = message.content.strip()
+        bad_titles = {"", "无法识别的内容", "未命名知识", "无标题"}
+        if str(parsed.get("title", "")).strip() in bad_titles:
+            updates["title"] = self._derive_title(content)
+        if not parsed.get("summary"):
+            updates["summary"] = content[:160] or "用户保存的待整理内容。"
+        if not parsed.get("category"):
+            updates["category"] = "待整理"
+        if not parsed.get("tags"):
+            updates["tags"] = self._derive_tags(content)
+        if not parsed.get("keywords"):
+            updates["keywords"] = self._derive_tags(content)
+        if message.source_url and not parsed.get("original_url"):
+            updates["original_url"] = message.source_url
+        if message.user_note and not parsed.get("user_note"):
+            updates["user_note"] = message.user_note
+        return updates
+
+    def _derive_title(self, content: str) -> str:
+        first_line = content.splitlines()[0].strip() if content else ""
+        return first_line[:40] or "待整理知识"
+
+    def _derive_tags(self, content: str) -> list[str]:
+        tags = []
+        keyword_map = {
+            "AI": "AI",
+            "知识": "知识管理",
+            "微信": "微信入口",
+            "飞书": "飞书",
+            "产品": "产品设计",
+            "架构": "技术架构",
+        }
+        for needle, tag in keyword_map.items():
+            if needle in content and tag not in tags:
+                tags.append(tag)
+        return tags or ["待整理"]
 
     def _fallback_analysis(self, message: MessageIn) -> KnowledgeAnalysis:
         content = message.content.strip()
